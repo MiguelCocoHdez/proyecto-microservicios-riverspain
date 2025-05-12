@@ -1,0 +1,54 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: msvc-gateway
+
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "http://localhost:4200"  # Ajusta al origen de tu frontend
+            allowedMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS","PATCH"]
+            allowedHeaders: ["*"]
+      routes:
+        - id: zonas
+          uri: lb://msvc-zonas  # Ajusta al nombre real en Eureka
+          predicates:
+            - Path=/riverspain/zonas/**
+
+        - id: ciudades
+          uri: lb://msvc-ciudades
+          predicates:
+            - Path=/riverspain/ciudad/**
+
+        - id: voluntarios
+          uri: lb://msvc-voluntarios
+          predicates:
+            - Path=/riverspain/voluntarios/**
+
+        - id: peces
+          uri: lb://msvc-peces
+          predicates:
+            - Path=/riverspain/peces/**
+
+        - id: rios
+          uri: lb://msvc-rios
+          predicates:
+            - Path=/riverspain/rios/**
+
+        - id: batidas
+          uri: lb://msvc-batidas
+          predicates:
+            - Path=/riverspain/batidas/**
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs

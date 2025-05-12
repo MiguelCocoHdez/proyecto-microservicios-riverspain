@@ -1,0 +1,17 @@
+server:
+  port: 8761
+
+eureka:
+  instance:
+    hostname: localhost  #Este es el host del servidor
+  client:
+    register-with-eureka: false  #esto es para que no se registre en eureka a si mismo
+    fetch-registry: false
+    server-url: 
+      defaultZone: http://localhost:${server.port}/eureka/  #Lo de dentro de las llaves referencia a lo de arriba de server.port || Esta es la ruta del servidor
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

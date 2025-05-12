@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: msvc-eureka
+  config:
+    import: optional:configserver:http://localhost:8888  #Aqui le estamos diciendo la ruta donde esta el configserver

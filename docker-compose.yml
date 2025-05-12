@@ -1,0 +1,293 @@
+version: '3.9'
+services:
+############################# DEFINICION BASES DE DATOS
+  mysql-voluntarios:
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=voluntariosdb
+    ports:
+      - "33061:3306"
+    networks:
+      - riverspain
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 10s
+      retries: 5
+  # mysql-batidas:
+  #   image: mysql:8
+  #   environment:
+  #     - MYSQL_ROOT_PASSWORD=root
+  #     - MYSQL_DATABASE=batidasdb
+  #   ports:
+  #     - "33062:3306"
+  #   networks:
+  #     - riverspain
+  #   healthcheck:
+  #     test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+  #     interval: 10s
+  #     retries: 5
+
+  mysql-ciudades:
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=ciudadesdb
+    ports:
+      - "33063:3306"
+    networks:
+      - riverspain
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 10s
+      retries: 5
+  mysql-rios:
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=riosdb
+    ports:
+      - "33064:3306"
+    networks:
+      - riverspain
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 10s
+      retries: 5
+  mysql-peces:
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=pecesdb
+    ports:
+      - "33065:3306"
+    networks:
+      - riverspain
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 10s
+      retries: 5
+  mysql-zonas:
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=zonasdb
+    ports:
+      - "33066:3306"
+    networks:
+      - riverspain
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 10s
+      retries: 5
+#############################
+  microservicio-config:
+    build: ./microservicio-config
+    ports:
+      - "8888:8888"
+    networks:
+      - riverspain
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
+      interval: 10s
+      retries: 5
+    environment:
+      - EUREKA_CLIENT_REGISTER_WITH_EUREKA=false
+      - EUREKA_CLIENT_FETCH_REGISTRY=false
+
+  microservicio-eureka:
+    build: ./microservicio-eureka
+    ports:
+      - "8761:8761"
+    networks:
+      - riverspain
+    depends_on:
+      microservicio-config:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  microservicio-voluntarios:
+    build: ./microservicio-voluntarios
+    ports:
+      - "8083:8083"
+    depends_on:
+      mysql-voluntarios:
+        condition: service_healthy
+      microservicio-config:
+        condition: service_healthy
+      microservicio-eureka:
+        condition: service_healthy
+    networks:
+      - riverspain
+    environment:
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://microservicio-config:8888
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-voluntarios:3306/voluntariosdb
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://microservicio-eureka:8761/eureka/
+      - EUREKA_INSTANCE_HOSTNAME=microservicio-voluntarios
+      - SPRING_SQL_INIT_MODE=always  # Habilita la ejecución de data.sql
+      - SPRING_JPA_DEFER_DATASOURCE_INITIALIZATION=true
+  # microservicio-batidas:
+  #   build: ./microservicio-batidas
+  #   ports:
+  #     - "8086:8086"
+  #   depends_on:
+  #     mysql-batidas:
+  #       condition: service_healthy
+  #     microservicio-config:
+  #       condition: service_healthy
+  #     microservicio-eureka:
+  #       condition: service_healthy
+  #   networks:
+  #     - riverspain
+  #   environment:
+  #     - SPRING_CONFIG_IMPORT=optional:configserver:http://microservicio-config:8888
+  #     - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-batidas:3306/batidasdb
+  #     - SPRING_DATASOURCE_USERNAME=root
+  #     - SPRING_DATASOURCE_PASSWORD=root
+  #     - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://microservicio-eureka:8761/eureka/
+  #     - EUREKA_INSTANCE_HOSTNAME=microservicio-batidas
+  #     - SPRING_SQL_INIT_MODE=always  # Habilita la ejecución de data.sql
+  #     - SPRING_JPA_DEFER_DATASOURCE_INITIALIZATION=true
+
+  microservicio-ciudades:
+    build: ./microservicio-ciudades
+    ports:
+      - "8082:8082"
+    depends_on:
+      mysql-ciudades:
+        condition: service_healthy
+      microservicio-config:
+        condition: service_healthy
+      microservicio-eureka:
+        condition: service_healthy
+    networks:
+      - riverspain
+    environment:
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://microservicio-config:8888
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-ciudades:3306/ciudadesdb
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://microservicio-eureka:8761/eureka/
+      - EUREKA_INSTANCE_HOSTNAME=microservicio-ciudades
+      - SPRING_SQL_INIT_MODE=always  # Habilita la ejecución de data.sql
+      - SPRING_JPA_DEFER_DATASOURCE_INITIALIZATION=true
+
+  microservicio-rios:
+    build: ./microservicio-rios
+    ports:
+      - "8085:8085"
+    depends_on:
+      mysql-rios:
+        condition: service_healthy
+      microservicio-config:
+        condition: service_healthy
+      microservicio-eureka:
+        condition: service_healthy
+    networks:
+      - riverspain
+    environment:
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://microservicio-config:8888
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-rios:3306/riosdb
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://microservicio-eureka:8761/eureka/
+      - EUREKA_INSTANCE_HOSTNAME=microservicio-rios
+      - SPRING_SQL_INIT_MODE=always  # Habilita la ejecución de data.sql
+      - SPRING_JPA_DEFER_DATASOURCE_INITIALIZATION=true
+  microservicio-peces:
+    build: ./microservicio-peces
+    ports:
+      - "8084:8084"
+    depends_on:
+      mysql-peces:
+        condition: service_healthy
+      microservicio-config:
+        condition: service_healthy
+      microservicio-eureka:
+        condition: service_healthy
+    networks:
+      - riverspain
+    environment:
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://microservicio-config:8888
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-peces:3306/pecesdb
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://microservicio-eureka:8761/eureka/
+      - EUREKA_INSTANCE_HOSTNAME=microservicio-peces
+      - SPRING_SQL_INIT_MODE=always  # Habilita la ejecución de data.sql
+      - SPRING_JPA_DEFER_DATASOURCE_INITIALIZATION=true
+  microservicio-zonas:
+    build: ./microservicio-zonas
+    ports:
+      - "8081:8081"
+    depends_on:
+      mysql-zonas:
+        condition: service_healthy
+      microservicio-config:
+        condition: service_healthy
+      microservicio-eureka:
+        condition: service_healthy
+    networks:
+      - riverspain
+    environment:
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://microservicio-config:8888
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-zonas:3306/zonasdb
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://microservicio-eureka:8761/eureka/
+      - EUREKA_INSTANCE_HOSTNAME=microservicio-zonas
+      - SPRING_SQL_INIT_MODE=always  # Habilita la ejecución de data.sql
+      - SPRING_JPA_DEFER_DATASOURCE_INITIALIZATION=true
+  microservicio-gateway:
+    build: ./microservicio-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      microservicio-config:
+        condition: service_healthy
+      microservicio-eureka:
+        condition: service_healthy
+    networks:
+      - riverspain
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CLOUD_GATEWAY_ROUTES[0].ID=voluntarios
+      - SPRING_CLOUD_GATEWAY_ROUTES[0].URI=lb://msvc-voluntarios
+      - SPRING_CLOUD_GATEWAY_ROUTES[0].PREDICATES=Path=/riverspain/voluntarios/**
+      - SPRING_CLOUD_GATEWAY_ROUTES[1].ID=batidas
+      - SPRING_CLOUD_GATEWAY_ROUTES[1].URI=lb://msvc-batidas
+      - SPRING_CLOUD_GATEWAY_ROUTES[1].PREDICATES=Path=/riverspain/batidas/**
+      - SPRING_CLOUD_GATEWAY_ROUTES[2].ID=ciudades
+      - SPRING_CLOUD_GATEWAY_ROUTES[2].URI=lb://msvc-ciudades
+      - SPRING_CLOUD_GATEWAY_ROUTES[2].PREDICATES=Path=/riverspain/ciudades/**
+      - SPRING_CLOUD_GATEWAY_ROUTES[3].ID=rios
+      - SPRING_CLOUD_GATEWAY_ROUTES[3].URI=lb://msvc-rios
+      - SPRING_CLOUD_GATEWAY_ROUTES[3].PREDICATES=Path=/riverspain/rios/**
+      - SPRING_CLOUD_GATEWAY_ROUTES[4].ID=peces
+      - SPRING_CLOUD_GATEWAY_ROUTES[4].URI=lb://msvc-peces
+      - SPRING_CLOUD_GATEWAY_ROUTES[4].PREDICATES=Path=/riverspain/peces/**
+      - SPRING_CLOUD_GATEWAY_ROUTES[5].ID=zonas
+      - SPRING_CLOUD_GATEWAY_ROUTES[5].URI=lb://msvc-zonas
+      - SPRING_CLOUD_GATEWAY_ROUTES[5].PREDICATES=Path=/riverspain/zonas/**
+      - SPRING_CLOUD_GATEWAY_ROUTES[6].ID=batida
+      - SPRING_CLOUD_GATEWAY_ROUTES[6].URI=lb://msvc-batidas
+      - SPRING_CLOUD_GATEWAY_ROUTES[6].PREDICATES=Path=/riverspain/batida/**
+      - SPRING_CLOUD_GATEWAY_ROUTES[7].ID=informes
+      - SPRING_CLOUD_GATEWAY_ROUTES[7].URI=lb://msvc-batidas
+      - SPRING_CLOUD_GATEWAY_ROUTES[7].PREDICATES=Path=/riverspain/informes/**
+      - SPRING_CLOUD_GATEWAY_ROUTES[8].ID=utilidades
+      - SPRING_CLOUD_GATEWAY_ROUTES[8].URI=lb://msvc-batidas
+      - SPRING_CLOUD_GATEWAY_ROUTES[8].PREDICATES=Path=/riverspain/utilidades/**
+
+networks:
+  riverspain:
+    external: true
+    name: riverspain_network
