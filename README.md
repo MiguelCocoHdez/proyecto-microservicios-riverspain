@@ -13,6 +13,7 @@ RiverSpain es un sistema distribuido desarrollado como proyecto académico, enfo
 - **Swagger (OpenAPI 3)**: Documentación de APIs.
 - **Arquitectura RESTful**: Diseño de APIs basado en REST.
 - **Arquitectura orientada a microservicios**: Modularidad y escalabilidad.
+- **Mockito y JUnit5**: Test de los microservicios.
 
 ## 📦 Estructura de microservicios
 
